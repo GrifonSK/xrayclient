@@ -8,12 +8,12 @@ COPY --from=xray /usr/local/bin/xray /usr/local/bin/xray
 
 WORKDIR /mnt/xrayclient
 
-COPY config.json subscriptions.txt ./
-COPY update_xray_config.py server.py index.html ./
-COPY update_xray_config.py server.py index.html /opt/xrayclient/
-RUN chmod +x update_xray_config.py server.py /opt/xrayclient/*.py
+COPY config/ ./config/
+COPY scripts/ ./scripts/
+COPY scripts/ /opt/xrayclient/
+RUN chmod +x scripts/*.py /opt/xrayclient/*.py
 
-RUN echo "0 */3 * * * python3 /mnt/xrayclient/update_xray_config.py --force >> /var/log/xray-update.log 2>&1" > /etc/crontabs/root
+RUN echo "0 */3 * * * python3 /mnt/xrayclient/scripts/update_xray_config.py --force >> /var/log/xray-update.log 2>&1" > /etc/crontabs/root
 
 EXPOSE 10808
 

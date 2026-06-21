@@ -13,9 +13,11 @@ import urllib.parse
 HOST = "0.0.0.0"
 PORT = 8080
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-SUBS_FILE = os.path.join(BASE_DIR, "subscriptions.txt")
-CONFIG_FILE = os.path.join(BASE_DIR, "config.json")
-USERS_FILE = os.path.join(BASE_DIR, "users.txt")
+ROOT_DIR = os.path.dirname(BASE_DIR)
+CONFIG_DIR = os.path.join(ROOT_DIR, "config")
+SUBS_FILE = os.path.join(CONFIG_DIR, "subscriptions.txt")
+CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
+USERS_FILE = os.path.join(CONFIG_DIR, "users.txt")
 UPDATE_SCRIPT = os.path.join(BASE_DIR, "update_xray_config.py")
 
 

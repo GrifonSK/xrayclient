@@ -6,7 +6,7 @@ services:
     ports:
       - "10808:10808"
     volumes:
-      - xray_data:/mnt/xrayclient
+      - xray_data:/mnt/xrayclient/config
 
 volumes:
   xray_data:

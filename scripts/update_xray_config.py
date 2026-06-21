@@ -11,11 +11,12 @@ import urllib.parse
 from datetime import datetime
 from hashlib import sha256
 
-SUBSCRIPTIONS_FILE = "/mnt/xrayclient/subscriptions.txt"
-USERS_FILE = "/mnt/xrayclient/users.txt"
-CONFIG_PATH = "/mnt/xrayclient/config.json"
-BACKUP_DIR = "/mnt/xrayclient/backups"
-STATE_FILE = "/mnt/xrayclient/.subscription_hash"
+CONFIG_DIR = "/mnt/xrayclient/config"
+SUBSCRIPTIONS_FILE = os.path.join(CONFIG_DIR, "subscriptions.txt")
+USERS_FILE = os.path.join(CONFIG_DIR, "users.txt")
+CONFIG_PATH = os.path.join(CONFIG_DIR, "config.json")
+BACKUP_DIR = os.path.join(CONFIG_DIR, "backups")
+STATE_FILE = os.path.join(CONFIG_DIR, ".subscription_hash")
 
 
 def parse_vless(url: str) -> dict:

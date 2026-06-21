@@ -1,4 +1,5 @@
-.subscription_hash
+config/.subscription_hash
+config/backups/
+config/users.txt
 backups/
-users.txt
 __pycache__/

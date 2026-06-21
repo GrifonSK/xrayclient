@@ -1,26 +1,29 @@
 #!/bin/bash
 set -e
 
-DATA_DIR="/mnt/xrayclient"
+ROOT_DIR="/mnt/xrayclient"
+SCRIPTS_DIR="$ROOT_DIR/scripts"
+CONFIG_DIR="$ROOT_DIR/config"
 
-mkdir -p "$DATA_DIR/backups"
+mkdir -p "$CONFIG_DIR/backups"
 
 for f in update_xray_config.py server.py index.html; do
-    if [ ! -f "$DATA_DIR/$f" ] && [ -f "/opt/xrayclient/$f" ]; then
-        cp "/opt/xrayclient/$f" "$DATA_DIR/$f"
-        echo "Copied $f to data directory"
+    if [ ! -f "$SCRIPTS_DIR/$f" ] && [ -f "/opt/xrayclient/$f" ]; then
+        cp "/opt/xrayclient/$f" "$SCRIPTS_DIR/$f"
+        chmod +x "$SCRIPTS_DIR/$f" 2>/dev/null
+        echo "Copied $f to scripts directory"
     fi
 done
 
-if [ ! -f "$DATA_DIR/users.txt" ]; then
-    echo "# SOCKS5 users (user:pass one per line)" > "$DATA_DIR/users.txt"
-    echo "admin:admin" >> "$DATA_DIR/users.txt"
+if [ ! -f "$CONFIG_DIR/users.txt" ]; then
+    echo "# SOCKS5 users (user:pass one per line)" > "$CONFIG_DIR/users.txt"
+    echo "admin:admin" >> "$CONFIG_DIR/users.txt"
     echo "Created default users.txt with admin:admin"
 fi
 
-python3 "$DATA_DIR/update_xray_config.py" --force || echo "Initial config generation skipped (subscriptions may be empty)"
+python3 "$SCRIPTS_DIR/update_xray_config.py" --force || echo "Initial config generation skipped (subscriptions may be empty)"
 
 crond
 
 echo "Starting Xray..."
-exec /usr/local/bin/xray run -c "$DATA_DIR/config.json"
+exec /usr/local/bin/xray run -c "$CONFIG_DIR/config.json"
