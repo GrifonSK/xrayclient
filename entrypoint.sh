@@ -4,6 +4,7 @@ set -e
 ROOT_DIR="/mnt/xrayclient"
 SCRIPTS_DIR="$ROOT_DIR/scripts"
 CONFIG_DIR="$ROOT_DIR/config"
+XRAY_BIN="/usr/local/bin/xray"
 
 mkdir -p "$CONFIG_DIR/backups"
 
@@ -26,4 +27,27 @@ python3 "$SCRIPTS_DIR/update_xray_config.py" --force || echo "Initial config gen
 crond
 
 echo "Starting Xray..."
-exec /usr/local/bin/xray run -c "$CONFIG_DIR/config.json"
+$XRAY_BIN run -c "$CONFIG_DIR/config.json" &
+XRAY_PID=$!
+
+shutdown() {
+    echo "Shutting down..."
+    kill "$XRAY_PID" 2>/dev/null || true
+    wait "$XRAY_PID" 2>/dev/null || true
+    exit 0
+}
+trap shutdown SIGTERM SIGINT
+
+LAST_MTIME=$(stat -c %Y "$CONFIG_DIR/config.json" 2>/dev/null || echo 0)
+while true; do
+    sleep 10
+    NEW_MTIME=$(stat -c %Y "$CONFIG_DIR/config.json" 2>/dev/null || echo 0)
+    if [ "$NEW_MTIME" != "$LAST_MTIME" ]; then
+        echo "Config changed, restarting Xray..."
+        kill "$XRAY_PID" 2>/dev/null || true
+        wait "$XRAY_PID" 2>/dev/null || true
+        $XRAY_BIN run -c "$CONFIG_DIR/config.json" &
+        XRAY_PID=$!
+        LAST_MTIME="$NEW_MTIME"
+    fi
+done
