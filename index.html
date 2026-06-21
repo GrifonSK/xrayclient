@@ -34,6 +34,12 @@ h1 { font-size: 1.4rem; margin-bottom: 20px; color: #fff; }
 .btn-toggle.off { background: #444; }
 .btn-toggle.off:hover { background: #666; }
 .empty { color: #666; font-size: 0.9rem; text-align: center; padding: 20px 0; }
+.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; flex-shrink: 0; }
+.status-dot.alive { background: #22c55e; }
+.status-dot.dead { background: #ef4444; }
+.status-dot.checking { background: #eab308; animation: pulse 1s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+.sub-list li .tag { font-size: 0.75rem; color: #666; margin-right: 8px; }
 #output { background: #0a0a0a; border: 1px solid #2a2a2a; border-radius: 6px; padding: 12px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.8rem; white-space: pre-wrap; max-height: 300px; overflow-y: auto; color: #4ade80; margin-top: 12px; display: none; }
 #output.error { color: #f87171; }
 .spinner { display: none; width: 16px; height: 16px; border: 2px solid #333; border-top-color: #4a9eff; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
@@ -56,6 +62,14 @@ h1 { font-size: 1.4rem; margin-bottom: 20px; color: #fff; }
   <ul class="sub-list" id="subList">
     <li class="empty">Загрузка...</li>
   </ul>
+</div>
+
+<div class="card">
+  <h2>Серверы в config.json</h2>
+  <ul class="sub-list" id="serverList">
+    <li class="empty">Загрузка...</li>
+  </ul>
+  <button class="btn btn-primary" style="margin-top:12px;width:100%;" onclick="loadServers()">Проверить доступность</button>
 </div>
 
 <div class="card">
@@ -132,6 +146,28 @@ async function toggleSub(index) {
   }
 }
 
+async function loadServers() {
+  const list = document.getElementById('serverList');
+  list.innerHTML = '<li class="empty"><span class="status-dot checking"></span>Проверка...</li>';
+  try {
+    const res = await fetch(`${API_BASE}/api/servers`);
+    const data = await res.json();
+    if (data.length === 0) {
+      list.innerHTML = '<li class="empty">Нет серверов в config.json</li>';
+      return;
+    }
+    list.innerHTML = data.map(s =>
+      `<li>
+        <span class="status-dot ${s.reachable ? 'alive' : 'dead'}"></span>
+        <span class="tag">${escapeHtml(s.tag)}</span>
+        <span class="url">${escapeHtml(s.address)}:${s.port}</span>
+      </li>`
+    ).join('');
+  } catch (e) {
+    list.innerHTML = '<li class="empty">Ошибка загрузки</li>';
+  }
+}
+
 async function runUpdate() {
   const btn = document.getElementById('updateBtn');
   const spinner = document.getElementById('spinner');
@@ -162,6 +198,7 @@ document.getElementById('urlInput').addEventListener('keydown', e => { if (e.key
 document.getElementById('updateBtn').addEventListener('click', runUpdate);
 
 loadSubs();
+loadServers();
 </script>
 </body>
 </html>

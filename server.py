@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """HTTP server for managing Xray subscriptions via browser."""
 
+import concurrent.futures
 import http.server
 import json
 import os
+import socket
 import subprocess
 import sys
 import urllib.parse
@@ -12,7 +14,40 @@ HOST = "0.0.0.0"
 PORT = 8080
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SUBS_FILE = os.path.join(BASE_DIR, "subscriptions.txt")
+CONFIG_FILE = os.path.join(BASE_DIR, "config.json")
 UPDATE_SCRIPT = os.path.join(BASE_DIR, "update_xray_config.py")
+
+
+def read_servers():
+    if not os.path.exists(CONFIG_FILE):
+        return []
+    try:
+        with open(CONFIG_FILE) as f:
+            cfg = json.load(f)
+    except Exception:
+        return []
+    servers = []
+    for ob in cfg.get("outbounds", []):
+        tag = ob.get("tag", "")
+        if not tag.startswith("server-"):
+            continue
+        vnext = ob.get("settings", {}).get("vnext", [])
+        if not vnext:
+            continue
+        addr = vnext[0].get("address", "")
+        port = vnext[0].get("port", 0)
+        protocol = ob.get("protocol", "")
+        servers.append({"tag": tag, "address": addr, "port": port, "protocol": protocol})
+    return servers
+
+
+def check_reachable(addr, port, timeout=3):
+    try:
+        sock = socket.create_connection((addr, port), timeout=timeout)
+        sock.close()
+        return True
+    except Exception:
+        return False
 
 
 def read_entries():
@@ -48,6 +83,17 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         if parsed.path == "/api/subscriptions":
             self.send_json(read_entries())
+            return
+        if parsed.path == "/api/servers":
+            servers = read_servers()
+            with concurrent.futures.ThreadPoolExecutor(max_workers=30) as pool:
+                futures = {
+                    pool.submit(check_reachable, s["address"], s["port"]): s
+                    for s in servers
+                }
+                for f in concurrent.futures.as_completed(futures):
+                    futures[f]["reachable"] = f.result()
+            self.send_json(servers)
             return
         if parsed.path == "/":
             self.path = "/index.html"
