@@ -10,7 +10,8 @@ WORKDIR /mnt/xrayclient
 
 COPY config.json subscriptions.txt ./
 COPY update_xray_config.py server.py index.html ./
-RUN chmod +x update_xray_config.py server.py
+COPY update_xray_config.py server.py index.html /opt/xrayclient/
+RUN chmod +x update_xray_config.py server.py /opt/xrayclient/*.py
 
 RUN echo "0 */3 * * * python3 /mnt/xrayclient/update_xray_config.py --force >> /var/log/xray-update.log 2>&1" > /etc/crontabs/root
 

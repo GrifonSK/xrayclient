@@ -1,14 +1,13 @@
 #!/bin/bash
 set -e
 
-SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 DATA_DIR="/mnt/xrayclient"
 
 mkdir -p "$DATA_DIR/backups"
 
 for f in update_xray_config.py server.py index.html; do
-    if [ ! -f "$DATA_DIR/$f" ] && [ -f "$SCRIPT_DIR/$f" ]; then
-        cp "$SCRIPT_DIR/$f" "$DATA_DIR/$f"
+    if [ ! -f "$DATA_DIR/$f" ] && [ -f "/opt/xrayclient/$f" ]; then
+        cp "/opt/xrayclient/$f" "$DATA_DIR/$f"
         echo "Copied $f to data directory"
     fi
 done
