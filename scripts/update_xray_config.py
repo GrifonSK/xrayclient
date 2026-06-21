@@ -188,10 +188,6 @@ def generate_config(outbounds: list) -> dict:
 
     config = {
         "log": {"loglevel": "warning"},
-        "api": {
-            "tag": "api",
-            "services": ["HandlerService", "LoggerService", "StatsService", "RoutingService"],
-        },
         "observatory": {
             "subjectSelector": ["server-"],
             "probeUrl": "https://www.gstatic.com/generate_204",
@@ -204,23 +200,13 @@ def generate_config(outbounds: list) -> dict:
                 "port": 10808,
                 "protocol": "socks",
                 "settings": socks_settings,
-            },
-            {
-                "listen": "127.0.0.1",
-                "port": 65200,
-                "protocol": "dokodemo-door",
-                "settings": {"address": "127.0.0.1"},
-                "tag": "api",
-            },
+            }
         ],
         "outbounds": [],
         "routing": {
             "domainStrategy": "AsIs",
             "balancers": [{"tag": "best-ping", "selector": ["server-"]}],
-            "rules": [
-                {"type": "field", "inboundTag": ["api"], "outboundTag": "api"},
-                {"type": "field", "network": "tcp,udp", "balancerTag": "best-ping"},
-            ],
+            "rules": [{"type": "field", "network": "tcp,udp", "balancerTag": "best-ping"}],
         },
     }
     for i, ob in enumerate(outbounds):
