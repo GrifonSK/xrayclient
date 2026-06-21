@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xray Subscription Manager</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, system-ui, sans-serif; background: #0f0f0f; color: #e0e0e0; padding: 24px; max-width: 720px; margin: 0 auto; }
+h1 { font-size: 1.4rem; margin-bottom: 20px; color: #fff; }
+.card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+.card h2 { font-size: 1rem; margin-bottom: 12px; color: #aaa; }
+.input-row { display: flex; gap: 8px; }
+.input-row input { flex: 1; background: #252525; border: 1px solid #333; border-radius: 6px; padding: 10px 12px; color: #fff; font-size: 0.9rem; outline: none; }
+.input-row input:focus { border-color: #4a9eff; }
+.btn { padding: 10px 18px; border: none; border-radius: 6px; font-size: 0.9rem; cursor: pointer; white-space: nowrap; }
+.btn-primary { background: #2563eb; color: #fff; }
+.btn-primary:hover { background: #1d4ed8; }
+.btn-danger { background: #dc2626; color: #fff; padding: 4px 10px; font-size: 0.8rem; }
+.btn-danger:hover { background: #b91c1c; }
+.btn-success { background: #16a34a; color: #fff; width: 100%; }
+.btn-success:hover { background: #15803d; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.sub-list { list-style: none; }
+.sub-list li { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #252525; word-break: break-all; }
+.sub-list li:last-child { border-bottom: none; }
+.sub-list li .url { flex: 1; font-size: 0.85rem; color: #ccc; }
+.sub-list li.disabled { opacity: 0.4; }
+.sub-list li.disabled .url { text-decoration: line-through; }
+.btn-toggle { background: #555; color: #fff; padding: 4px 8px; font-size: 0.75rem; border: none; border-radius: 4px; cursor: pointer; }
+.btn-toggle:hover { background: #777; }
+.btn-toggle.on { background: #2563eb; }
+.btn-toggle.on:hover { background: #1d4ed8; }
+.btn-toggle.off { background: #444; }
+.btn-toggle.off:hover { background: #666; }
+.empty { color: #666; font-size: 0.9rem; text-align: center; padding: 20px 0; }
+#output { background: #0a0a0a; border: 1px solid #2a2a2a; border-radius: 6px; padding: 12px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.8rem; white-space: pre-wrap; max-height: 300px; overflow-y: auto; color: #4ade80; margin-top: 12px; display: none; }
+#output.error { color: #f87171; }
+.spinner { display: none; width: 16px; height: 16px; border: 2px solid #333; border-top-color: #4a9eff; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<h1>Xray Subscription Manager</h1>
+
+<div class="card">
+  <h2>Добавить подписку</h2>
+  <div class="input-row">
+    <input type="url" id="urlInput" placeholder="https://example.com/sub/link" autocomplete="off">
+    <button class="btn btn-primary" id="addBtn">Добавить</button>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Текущие подписки</h2>
+  <ul class="sub-list" id="subList">
+    <li class="empty">Загрузка...</li>
+  </ul>
+</div>
+
+<div class="card">
+  <button class="btn btn-success" id="updateBtn">Запустить обновление Xray</button>
+  <div class="spinner" id="spinner"></div>
+  <pre id="output"></pre>
+</div>
+
+<script>
+const API_BASE = '';
+
+async function loadSubs() {
+  const res = await fetch(`${API_BASE}/api/subscriptions`);
+  const data = await res.json();
+  const list = document.getElementById('subList');
+  if (data.length === 0) {
+    list.innerHTML = '<li class="empty">Нет подписок</li>';
+    return;
+  }
+  list.innerHTML = data.map((entry, i) =>
+    `<li class="${entry.enabled ? '' : 'disabled'}">
+      <span class="url">${escapeHtml(entry.url)}</span>
+      <button class="btn-toggle ${entry.enabled ? 'on' : 'off'}" onclick="toggleSub(${i})">${entry.enabled ? 'вкл' : 'выкл'}</button>
+      <button class="btn btn-danger" onclick="removeSub(${i})">✕</button>
+    </li>`
+  ).join('');
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+async function addSub() {
+  const input = document.getElementById('urlInput');
+  const url = input.value.trim();
+  if (!url) return;
+  document.getElementById('addBtn').disabled = true;
+  try {
+    const res = await fetch(`${API_BASE}/api/subscriptions`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({url})
+    });
+    if (!res.ok) { const err = await res.text(); alert('Ошибка: ' + err); return; }
+    input.value = '';
+    await loadSubs();
+  } catch (e) {
+    alert('Ошибка: ' + e.message);
+  } finally {
+    document.getElementById('addBtn').disabled = false;
+  }
+}
+
+async function removeSub(index) {
+  if (!confirm('Удалить эту подписку?')) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/subscriptions/${index}`, { method: 'DELETE' });
+    if (!res.ok) { const err = await res.text(); alert('Ошибка: ' + err); return; }
+    await loadSubs();
+  } catch (e) {
+    alert('Ошибка: ' + e.message);
+  }
+}
+
+async function toggleSub(index) {
+  try {
+    const res = await fetch(`${API_BASE}/api/subscriptions/toggle/${index}`, { method: 'PATCH' });
+    if (!res.ok) { const err = await res.text(); alert('Ошибка: ' + err); return; }
+    await loadSubs();
+  } catch (e) {
+    alert('Ошибка: ' + e.message);
+  }
+}
+
+async function runUpdate() {
+  const btn = document.getElementById('updateBtn');
+  const spinner = document.getElementById('spinner');
+  const output = document.getElementById('output');
+  btn.disabled = true;
+  spinner.style.display = 'block';
+  output.style.display = 'none';
+  output.className = '';
+  try {
+    const res = await fetch(`${API_BASE}/api/update`, { method: 'POST' });
+    const text = await res.text();
+    output.textContent = text;
+    output.style.display = 'block';
+    if (!res.ok) output.classList.add('error');
+    if (res.ok) await loadSubs();
+  } catch (e) {
+    output.textContent = 'Ошибка: ' + e.message;
+    output.style.display = 'block';
+    output.classList.add('error');
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+  }
+}
+
+document.getElementById('addBtn').addEventListener('click', addSub);
+document.getElementById('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') addSub(); });
+document.getElementById('updateBtn').addEventListener('click', runUpdate);
+
+loadSubs();
+</script>
+</body>
+</html>
