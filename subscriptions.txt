@@ -1,4 +1,4 @@
 # Xray subscription URLs (one per line)
-https://raw.githubusercontent.com/zieng2/wl/refs/heads/main/vless_universal.txt
+#https://raw.githubusercontent.com/zieng2/wl/refs/heads/main/vless_universal.txt
 https://proxygrifon.duckdns.org:65531/sub/grifonsubsub/hzpvsazuo0ttakm3
 https://remote-node-access.duckdns.org:2096/sub-client-link/vlbnj7fcru1i4j28
