@@ -1,12 +1,10 @@
+FROM ghcr.io/xtls/xray-core:latest AS xray
+
 FROM alpine:latest
 
-RUN apk add --no-cache curl python3 dcron bash
+RUN apk add --no-cache python3 dcron bash curl
 
-ARG XRAY_VERSION=25.3.6
-RUN curl -sL https://github.com/XTLS/Xray-core/releases/download/v${XRAY_VERSION}/Xray-linux-64.zip -o /tmp/xray.zip && \
-    unzip /tmp/xray.zip -d /usr/local/bin/ && \
-    rm /tmp/xray.zip && \
-    chmod +x /usr/local/bin/xray
+COPY --from=xray /usr/local/bin/xray /usr/local/bin/xray
 
 WORKDIR /mnt/xrayclient
 
