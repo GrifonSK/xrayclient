@@ -5,48 +5,275 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>XrayClient with proxy by GrifON</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;500&display=swap');
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, system-ui, sans-serif; background: #0f0f0f; color: #e0e0e0; padding: 24px; max-width: 720px; margin: 0 auto; }
-h1 { font-size: 1.4rem; margin-bottom: 20px; color: #fff; }
-.card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
-.card h2 { font-size: 1rem; margin-bottom: 12px; color: #aaa; }
+
+body {
+  font-family: 'JetBrains Mono', monospace;
+  background: #0a0a0f;
+  color: #c0c0e0;
+  padding: 24px;
+  max-width: 720px;
+  margin: 0 auto;
+  position: relative;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background: #0a0a0f;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(0,255,247,0.015) 40px, rgba(0,255,247,0.015) 41px),
+    repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(255,0,128,0.015) 40px, rgba(255,0,128,0.015) 41px);
+  pointer-events: none;
+}
+
+.tiled-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0.04;
+  font-family: 'Orbitron', monospace;
+  font-weight: 900;
+  font-size: 60px;
+  line-height: 1.2;
+  color: #00fff7;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  padding: 10px;
+  user-select: none;
+}
+
+.scanlines {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
+}
+
+h1 {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.1rem;
+  margin-bottom: 24px;
+  color: #00fff7;
+  text-align: center;
+  text-shadow: 0 0 20px rgba(0,255,247,0.5), 0 0 60px rgba(0,255,247,0.2);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  position: relative;
+  padding-bottom: 12px;
+}
+
+h1::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  width: 80%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #00fff7, #ff0080, transparent);
+}
+
+.card {
+  background: rgba(12, 12, 24, 0.85);
+  border: 1px solid rgba(0, 255, 247, 0.15);
+  border-radius: 4px;
+  padding: 20px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 0 15px rgba(0,255,247,0.05), inset 0 0 30px rgba(0,255,247,0.02);
+  position: relative;
+  z-index: 1;
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  top: -1px; left: 20%;
+  width: 60%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #00fff7, transparent);
+  opacity: 0.6;
+}
+
+.card h2 {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.7rem;
+  margin-bottom: 12px;
+  color: #ff0080;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px rgba(255,0,128,0.3);
+}
+
 .input-row { display: flex; gap: 8px; }
-.input-row input { flex: 1; background: #252525; border: 1px solid #333; border-radius: 6px; padding: 10px 12px; color: #fff; font-size: 0.9rem; outline: none; }
-.input-row input:focus { border-color: #4a9eff; }
-.btn { padding: 10px 18px; border: none; border-radius: 6px; font-size: 0.9rem; cursor: pointer; white-space: nowrap; }
-.btn-primary { background: #2563eb; color: #fff; }
-.btn-primary:hover { background: #1d4ed8; }
-.btn-danger { background: #dc2626; color: #fff; padding: 4px 10px; font-size: 0.8rem; }
-.btn-danger:hover { background: #b91c1c; }
-.btn-success { background: #16a34a; color: #fff; width: 100%; }
-.btn-success:hover { background: #15803d; }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.input-row input {
+  flex: 1;
+  background: rgba(0, 255, 247, 0.03);
+  border: 1px solid rgba(0, 255, 247, 0.15);
+  border-radius: 2px;
+  padding: 10px 12px;
+  color: #00fff7;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.input-row input:focus { border-color: #00fff7; box-shadow: 0 0 12px rgba(0,255,247,0.15), inset 0 0 12px rgba(0,255,247,0.05); }
+.input-row input::placeholder { color: rgba(0,255,247,0.2); }
+
+.btn {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 2px;
+  font-family: 'Orbitron', monospace;
+  font-size: 0.7rem;
+  cursor: pointer;
+  white-space: nowrap;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary {
+  background: transparent;
+  color: #00fff7;
+  border: 1px solid #00fff7;
+  box-shadow: 0 0 10px rgba(0,255,247,0.1);
+}
+.btn-primary:hover { background: rgba(0,255,247,0.1); box-shadow: 0 0 20px rgba(0,255,247,0.3); }
+
+.btn-danger {
+  background: transparent;
+  color: #ff0080;
+  border: 1px solid #ff0080;
+  padding: 4px 10px;
+  font-size: 0.6rem;
+  box-shadow: 0 0 8px rgba(255,0,128,0.1);
+}
+.btn-danger:hover { background: rgba(255,0,128,0.15); box-shadow: 0 0 16px rgba(255,0,128,0.3); }
+
+.btn-success {
+  background: transparent;
+  color: #00fff7;
+  border: 1px solid #00fff7;
+  width: 100%;
+  box-shadow: 0 0 15px rgba(0,255,247,0.1);
+}
+.btn-success:hover { background: rgba(0,255,247,0.1); box-shadow: 0 0 30px rgba(0,255,247,0.3); }
+
+.btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
 .sub-list { list-style: none; }
-.sub-list li { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #252525; word-break: break-all; }
+.sub-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0, 255, 247, 0.06);
+  word-break: break-all;
+}
 .sub-list li:last-child { border-bottom: none; }
-.sub-list li .url { flex: 1; font-size: 0.85rem; color: #ccc; }
-.sub-list li.disabled { opacity: 0.4; }
+.sub-list li .url { flex: 1; font-size: 0.78rem; color: #8080a0; }
+.sub-list li.disabled { opacity: 0.3; }
 .sub-list li.disabled .url { text-decoration: line-through; }
-.btn-toggle { background: #555; color: #fff; padding: 4px 8px; font-size: 0.75rem; border: none; border-radius: 4px; cursor: pointer; }
-.btn-toggle:hover { background: #777; }
-.btn-toggle.on { background: #2563eb; }
-.btn-toggle.on:hover { background: #1d4ed8; }
-.btn-toggle.off { background: #444; }
-.btn-toggle.off:hover { background: #666; }
-.empty { color: #666; font-size: 0.9rem; text-align: center; padding: 20px 0; }
-.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; flex-shrink: 0; }
-.status-dot.alive { background: #22c55e; }
-.status-dot.dead { background: #ef4444; }
-.status-dot.checking { background: #eab308; animation: pulse 1s infinite; }
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-.sub-list li .tag { font-size: 0.75rem; color: #666; margin-right: 8px; }
-#output { background: #0a0a0a; border: 1px solid #2a2a2a; border-radius: 6px; padding: 12px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.8rem; white-space: pre-wrap; max-height: 300px; overflow-y: auto; color: #4ade80; margin-top: 12px; display: none; }
-#output.error { color: #f87171; }
-.spinner { display: none; width: 16px; height: 16px; border: 2px solid #333; border-top-color: #4a9eff; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
+
+.btn-toggle {
+  background: transparent;
+  color: #ff0080;
+  padding: 4px 8px;
+  font-size: 0.6rem;
+  border: 1px solid rgba(255,0,128,0.3);
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: 'Orbitron', monospace;
+  letter-spacing: 1px;
+  transition: all 0.3s;
+}
+.btn-toggle:hover { border-color: #ff0080; box-shadow: 0 0 10px rgba(255,0,128,0.2); }
+.btn-toggle.on { border-color: #00fff7; color: #00fff7; }
+.btn-toggle.on:hover { box-shadow: 0 0 10px rgba(0,255,247,0.2); }
+
+.empty { color: rgba(255,0,128,0.3); font-size: 0.8rem; text-align: center; padding: 20px 0; letter-spacing: 1px; }
+
+.status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 0; margin-right: 8px; flex-shrink: 0; }
+.status-dot.alive { background: #00fff7; box-shadow: 0 0 8px #00fff7; }
+.status-dot.dead { background: #ff0080; box-shadow: 0 0 8px #ff0080; }
+.status-dot.checking { background: #8000ff; box-shadow: 0 0 8px #8000ff; animation: pulse 1s infinite; }
+
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+
+.sub-list li .tag { font-size: 0.65rem; color: rgba(128,0,255,0.6); margin-right: 8px; font-family: 'Orbitron', monospace; }
+
+#output {
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(0, 255, 247, 0.1);
+  border-radius: 2px;
+  padding: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  white-space: pre-wrap;
+  max-height: 300px;
+  overflow-y: auto;
+  color: #00fff7;
+  margin-top: 12px;
+  display: none;
+}
+#output.error { color: #ff0080; border-color: rgba(255,0,128,0.3); }
+
+.spinner {
+  display: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgba(0, 255, 247, 0.15);
+  border-top-color: #00fff7;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto;
+  box-shadow: 0 0 10px rgba(0,255,247,0.1);
+}
+
 @keyframes spin { to { transform: rotate(360deg); } }
+
+#xrayLog {
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(0, 255, 247, 0.08);
+  border-radius: 2px;
+  padding: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  white-space: pre-wrap;
+  max-height: 400px;
+  overflow-y: auto;
+  color: #8080c0;
+  margin: 0;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+::-webkit-scrollbar-thumb { background: rgba(0,255,247,0.2); }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,255,247,0.4); }
 </style>
 </head>
 <body>
+<div class="tiled-bg" id="tiledBg"></div>
+<div class="scanlines"></div>
 <h1>XrayClient with proxy by GrifON</h1>
 
 <div class="card">
@@ -98,6 +325,16 @@ h1 { font-size: 1.4rem; margin-bottom: 20px; color: #fff; }
 
 <script>
 const API_BASE = '';
+
+(function() {
+  const bg = document.getElementById('tiledBg');
+  const word = 'GrifON';
+  let html = '';
+  for (let i = 0; i < 800; i++) {
+    html += word + ' ';
+  }
+  bg.textContent = html;
+})();
 
 async function loadSubs() {
   const res = await fetch(`${API_BASE}/api/subscriptions`);
