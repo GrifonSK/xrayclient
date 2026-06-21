@@ -123,6 +123,18 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     futures[f]["reachable"] = f.result()
             self.send_json(servers)
             return
+        if parsed.path == "/api/logs":
+            log_file = "/mnt/xrayclient/xray.log"
+            if not os.path.exists(log_file):
+                self.send_json({"lines": []})
+                return
+            try:
+                with open(log_file) as f:
+                    lines = f.readlines()
+                self.send_json({"lines": lines[-200:]})
+            except Exception as e:
+                self.send_error(500, str(e))
+            return
         if parsed.path == "/":
             self.path = "/index.html"
         return super().do_GET()

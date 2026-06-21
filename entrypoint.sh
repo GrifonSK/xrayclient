@@ -39,7 +39,7 @@ python3 "$SCRIPTS_DIR/update_xray_config.py" --force || echo "Initial config gen
 crond
 
 echo "Starting Xray..."
-$XRAY_BIN run -c "$CONFIG_DIR/config.json" &
+$XRAY_BIN run -c "$CONFIG_DIR/config.json" > >(tee "$ROOT_DIR/xray.log") 2>&1 &
 XRAY_PID=$!
 
 echo "Starting Web UI..."

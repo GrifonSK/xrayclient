@@ -90,6 +90,12 @@ h1 { font-size: 1.4rem; margin-bottom: 20px; color: #fff; }
   <pre id="output"></pre>
 </div>
 
+<div class="card">
+  <h2>Лог Xray</h2>
+  <button class="btn btn-primary" style="margin-bottom:12px;width:100%;" onclick="loadLogs()">Обновить лог</button>
+  <pre id="xrayLog" style="background:#0a0a0a;border:1px solid #2a2a2a;border-radius:6px;padding:12px;font-family:'Cascadia Code','Fira Code',monospace;font-size:0.75rem;white-space:pre-wrap;max-height:400px;overflow-y:auto;color:#aaa;margin:0;">Загрузка...</pre>
+</div>
+
 <script>
 const API_BASE = '';
 
@@ -259,6 +265,20 @@ async function runUpdate() {
   }
 }
 
+async function loadLogs() {
+  const el = document.getElementById('xrayLog');
+  el.textContent = 'Загрузка...';
+  try {
+    const res = await fetch(`${API_BASE}/api/logs`);
+    const data = await res.json();
+    const lines = data.lines || [];
+    el.textContent = lines.join('') || '(лог пуст)';
+    el.scrollTop = el.scrollHeight;
+  } catch (e) {
+    el.textContent = 'Ошибка: ' + e.message;
+  }
+}
+
 document.getElementById('addBtn').addEventListener('click', addSub);
 document.getElementById('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') addSub(); });
 document.getElementById('addUserBtn').addEventListener('click', addUser);
@@ -268,6 +288,7 @@ document.getElementById('updateBtn').addEventListener('click', runUpdate);
 loadSubs();
 loadServers();
 loadUsers();
+loadLogs();
 </script>
 </body>
 </html>
