@@ -15,7 +15,7 @@ RUN chmod +x scripts/*.py /opt/xrayclient/*.py
 
 RUN echo "0 */3 * * * python3 /mnt/xrayclient/scripts/update_xray_config.py --force >> /var/log/xray-update.log 2>&1" > /etc/crontabs/root
 
-EXPOSE 10808
+EXPOSE 10808 8080
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

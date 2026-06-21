@@ -30,10 +30,14 @@ echo "Starting Xray..."
 $XRAY_BIN run -c "$CONFIG_DIR/config.json" &
 XRAY_PID=$!
 
+echo "Starting Web UI..."
+python3 "$SCRIPTS_DIR/server.py" &
+WEB_PID=$!
+
 shutdown() {
     echo "Shutting down..."
-    kill "$XRAY_PID" 2>/dev/null || true
-    wait "$XRAY_PID" 2>/dev/null || true
+    kill "$XRAY_PID" "$WEB_PID" 2>/dev/null || true
+    wait "$XRAY_PID" "$WEB_PID" 2>/dev/null || true
     exit 0
 }
 trap shutdown SIGTERM SIGINT

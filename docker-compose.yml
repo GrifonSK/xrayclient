@@ -5,22 +5,6 @@ services:
     restart: unless-stopped
     ports:
       - "10888:10808"
-    volumes:
-      - /etc/docker/xrayclienttest:/mnt/xrayclient/config
-
-  web:
-    image: ghcr.io/grifonsk/xrayclient:latest
-    container_name: xray-web
-    restart: unless-stopped
-    depends_on:
-      - xray
-    ports:
       - "10889:8080"
     volumes:
       - /etc/docker/xrayclienttest:/mnt/xrayclient/config
-    entrypoint:
-      - python3
-      - /mnt/xrayclient/scripts/server.py
-
-volumes:
-  xray_data:
