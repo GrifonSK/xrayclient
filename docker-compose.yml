@@ -5,3 +5,8 @@ services:
     restart: unless-stopped
     ports:
       - "10808:10808"
+    volumes:
+      - xray_data:/mnt/xrayclient
+
+volumes:
+  xray_data:
