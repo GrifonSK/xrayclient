@@ -1,0 +1,7 @@
+services:
+  xray:
+    image: ghcr.io/grifonsk/xrayclient:latest
+    container_name: xray
+    restart: unless-stopped
+    ports:
+      - "10808:10808"
