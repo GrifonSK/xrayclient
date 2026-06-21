@@ -34,7 +34,7 @@ body::after {
   z-index: -1;
   background-image:
     repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(0,255,247,0.015) 40px, rgba(0,255,247,0.015) 41px),
-    repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(255,0,128,0.015) 40px, rgba(255,0,128,0.015) 41px);
+    repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(255,102,0,0.015) 40px, rgba(255,102,0,0.015) 41px);
   pointer-events: none;
 }
 
@@ -85,7 +85,7 @@ h1::after {
   left: 10%;
   width: 80%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, #00fff7, #ff0080, transparent);
+  background: linear-gradient(90deg, transparent, #00fff7, #ff6600, transparent);
 }
 
 .card {
@@ -114,10 +114,10 @@ h1::after {
   font-family: 'Orbitron', monospace;
   font-size: 0.7rem;
   margin-bottom: 12px;
-  color: #ff0080;
+  color: #ff6600;
   letter-spacing: 2px;
   text-transform: uppercase;
-  text-shadow: 0 0 10px rgba(255,0,128,0.3);
+  text-shadow: 0 0 10px rgba(255,102,0,0.3);
 }
 
 .input-row { display: flex; gap: 8px; }
@@ -161,13 +161,13 @@ h1::after {
 
 .btn-danger {
   background: transparent;
-  color: #ff0080;
-  border: 1px solid #ff0080;
+  color: #ff6600;
+  border: 1px solid #ff6600;
   padding: 4px 10px;
   font-size: 0.6rem;
-  box-shadow: 0 0 8px rgba(255,0,128,0.1);
+  box-shadow: 0 0 8px rgba(255,102,0,0.1);
 }
-.btn-danger:hover { background: rgba(255,0,128,0.15); box-shadow: 0 0 16px rgba(255,0,128,0.3); }
+.btn-danger:hover { background: rgba(255,102,0,0.15); box-shadow: 0 0 16px rgba(255,102,0,0.3); }
 
 .btn-success {
   background: transparent;
@@ -196,25 +196,25 @@ h1::after {
 
 .btn-toggle {
   background: transparent;
-  color: #ff0080;
+  color: #ff6600;
   padding: 4px 8px;
   font-size: 0.6rem;
-  border: 1px solid rgba(255,0,128,0.3);
+  border: 1px solid rgba(255,102,0,0.3);
   border-radius: 2px;
   cursor: pointer;
   font-family: 'Orbitron', monospace;
   letter-spacing: 1px;
   transition: all 0.3s;
 }
-.btn-toggle:hover { border-color: #ff0080; box-shadow: 0 0 10px rgba(255,0,128,0.2); }
+.btn-toggle:hover { border-color: #ff6600; box-shadow: 0 0 10px rgba(255,102,0,0.2); }
 .btn-toggle.on { border-color: #00fff7; color: #00fff7; }
 .btn-toggle.on:hover { box-shadow: 0 0 10px rgba(0,255,247,0.2); }
 
-.empty { color: rgba(255,0,128,0.3); font-size: 0.8rem; text-align: center; padding: 20px 0; letter-spacing: 1px; }
+.empty { color: rgba(255,102,0,0.3); font-size: 0.8rem; text-align: center; padding: 20px 0; letter-spacing: 1px; }
 
 .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 0; margin-right: 8px; flex-shrink: 0; }
 .status-dot.alive { background: #00fff7; box-shadow: 0 0 8px #00fff7; }
-.status-dot.dead { background: #ff0080; box-shadow: 0 0 8px #ff0080; }
+.status-dot.dead { background: #ff6600; box-shadow: 0 0 8px #ff6600; }
 .status-dot.checking { background: #8000ff; box-shadow: 0 0 8px #8000ff; animation: pulse 1s infinite; }
 
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
@@ -235,7 +235,7 @@ h1::after {
   margin-top: 12px;
   display: none;
 }
-#output.error { color: #ff0080; border-color: rgba(255,0,128,0.3); }
+#output.error { color: #ff6600; border-color: rgba(255,102,0,0.3); }
 
 .spinner {
   display: none;
