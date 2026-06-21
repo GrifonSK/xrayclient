@@ -15,6 +15,7 @@ PORT = 8080
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SUBS_FILE = os.path.join(BASE_DIR, "subscriptions.txt")
 CONFIG_FILE = os.path.join(BASE_DIR, "config.json")
+USERS_FILE = os.path.join(BASE_DIR, "users.txt")
 UPDATE_SCRIPT = os.path.join(BASE_DIR, "update_xray_config.py")
 
 
@@ -78,11 +79,36 @@ def write_entries(entries):
                 f.write("# " + e["url"] + "\n")
 
 
+def read_users():
+    if not os.path.exists(USERS_FILE):
+        return []
+    users = []
+    with open(USERS_FILE) as f:
+        for line in f:
+            s = line.strip()
+            if not s or s.startswith("#"):
+                continue
+            if ":" in s:
+                user, _, passwd = s.partition(":")
+                users.append({"user": user.strip(), "pass": passwd.strip()})
+    return users
+
+
+def write_users(users):
+    with open(USERS_FILE, "w") as f:
+        f.write("# SOCKS5 users (user:pass one per line)\n")
+        for u in users:
+            f.write(f"{u['user']}:{u['pass']}\n")
+
+
 class Handler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
         if parsed.path == "/api/subscriptions":
             self.send_json(read_entries())
+            return
+        if parsed.path == "/api/users":
+            self.send_json(read_users())
             return
         if parsed.path == "/api/servers":
             servers = read_servers()
@@ -115,6 +141,24 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return
             entries.append({"url": url, "enabled": True})
             write_entries(entries)
+            self.send_json({"ok": True})
+            return
+
+        if parsed.path == "/api/users":
+            length = int(self.headers.get("Content-Length", 0))
+            body = json.loads(self.rfile.read(length)) if length else {}
+            username = body.get("user", "").strip()
+            password = body.get("pass", "").strip()
+            if not username or not password:
+                self.send_error(400, "Invalid credentials")
+                return
+            users = read_users()
+            for u in users:
+                if u["user"] == username:
+                    self.send_error(409, "User already exists")
+                    return
+            users.append({"user": username, "pass": password})
+            write_users(users)
             self.send_json({"ok": True})
             return
 
@@ -156,6 +200,20 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return
             entries.pop(index)
             write_entries(entries)
+            self.send_json({"ok": True})
+            return
+        if len(parts) == 4 and parts[1:3] == ["api", "users"]:
+            try:
+                index = int(parts[3])
+            except ValueError:
+                self.send_error(400, "Invalid index")
+                return
+            users = read_users()
+            if index < 0 or index >= len(users):
+                self.send_error(404, "Index out of range")
+                return
+            users.pop(index)
+            write_users(users)
             self.send_json({"ok": True})
             return
         self.send_error(404)

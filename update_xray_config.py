@@ -12,6 +12,7 @@ from datetime import datetime
 from hashlib import sha256
 
 SUBSCRIPTIONS_FILE = "/mnt/xrayclient/subscriptions.txt"
+USERS_FILE = "/mnt/xrayclient/users.txt"
 CONFIG_PATH = "/mnt/xrayclient/config.json"
 BACKUP_DIR = "/mnt/xrayclient/backups"
 STATE_FILE = "/mnt/xrayclient/.subscription_hash"
@@ -129,8 +130,8 @@ def read_subscription_urls() -> list[str]:
             if line and not line.startswith("#"):
                 urls.append(line)
     if not urls:
-        print(f"No subscription URLs found in {SUBSCRIPTIONS_FILE}", file=sys.stderr)
-        sys.exit(1)
+        print(f"No subscription URLs found, generating config without servers", file=sys.stderr)
+        return []
     return urls
 
 
@@ -160,7 +161,30 @@ def content_hash(lines: list[str]) -> str:
     return sha256("\n".join(lines).encode()).hexdigest()
 
 
+def read_users() -> list[dict]:
+    if not os.path.exists(USERS_FILE):
+        return []
+    users = []
+    with open(USERS_FILE) as f:
+        for line in f:
+            s = line.strip()
+            if not s or s.startswith("#"):
+                continue
+            if ":" in s:
+                user, _, passwd = s.partition(":")
+                users.append({"user": user.strip(), "pass": passwd.strip()})
+    return users
+
+
 def generate_config(outbounds: list) -> dict:
+    socks_settings = {"udp": True}
+    users = read_users()
+    if users:
+        socks_settings["auth"] = "password"
+        socks_settings["accounts"] = users
+    else:
+        socks_settings["auth"] = "noauth"
+
     config = {
         "log": {"loglevel": "warning"},
         "observatory": {
@@ -174,7 +198,7 @@ def generate_config(outbounds: list) -> dict:
                 "listen": "0.0.0.0",
                 "port": 10808,
                 "protocol": "socks",
-                "settings": {"auth": "noauth", "udp": True},
+                "settings": socks_settings,
             }
         ],
         "outbounds": [],
@@ -251,11 +275,10 @@ def main():
         except Exception as e:
             print(f"Warning: parse error: {e}", file=sys.stderr)
 
-    if not outbounds:
-        print("No valid outbounds found, keeping current config", file=sys.stderr)
-        return
-
-    print(f"Subscription: {len(outbounds)} servers")
+    if outbounds:
+        print(f"Subscription: {len(outbounds)} servers")
+    else:
+        print("No servers from subscriptions, generating config with auth only", file=sys.stderr)
 
     config = generate_config(outbounds)
 

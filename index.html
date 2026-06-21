@@ -73,6 +73,18 @@ h1 { font-size: 1.4rem; margin-bottom: 20px; color: #fff; }
 </div>
 
 <div class="card">
+  <h2>Пользователи SOCKS5</h2>
+  <div class="input-row" style="margin-bottom:12px;">
+    <input type="text" id="userInput" placeholder="логин" autocomplete="off" style="flex:0.4;">
+    <input type="password" id="passInput" placeholder="пароль" autocomplete="off">
+    <button class="btn btn-primary" id="addUserBtn">Добавить</button>
+  </div>
+  <ul class="sub-list" id="userList">
+    <li class="empty">Загрузка...</li>
+  </ul>
+</div>
+
+<div class="card">
   <button class="btn btn-success" id="updateBtn">Запустить обновление Xray</button>
   <div class="spinner" id="spinner"></div>
   <pre id="output"></pre>
@@ -146,6 +158,60 @@ async function toggleSub(index) {
   }
 }
 
+async function loadUsers() {
+  const list = document.getElementById('userList');
+  try {
+    const res = await fetch(`${API_BASE}/api/users`);
+    const data = await res.json();
+    if (data.length === 0) {
+      list.innerHTML = '<li class="empty">Нет пользователей</li>';
+      return;
+    }
+    list.innerHTML = data.map((u, i) =>
+      `<li>
+        <span class="url" style="flex:0.4;">${escapeHtml(u.user)}</span>
+        <span class="url" style="flex:0.4;color:#666;">${escapeHtml(u.pass)}</span>
+        <button class="btn btn-danger" onclick="removeUser(${i})">✕</button>
+      </li>`
+    ).join('');
+  } catch (e) {
+    list.innerHTML = '<li class="empty">Ошибка загрузки</li>';
+  }
+}
+
+async function addUser() {
+  const user = document.getElementById('userInput').value.trim();
+  const pass = document.getElementById('passInput').value.trim();
+  if (!user || !pass) return;
+  document.getElementById('addUserBtn').disabled = true;
+  try {
+    const res = await fetch(`${API_BASE}/api/users`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({user, pass})
+    });
+    if (!res.ok) { const err = await res.text(); alert('Ошибка: ' + err); return; }
+    document.getElementById('userInput').value = '';
+    document.getElementById('passInput').value = '';
+    await loadUsers();
+  } catch (e) {
+    alert('Ошибка: ' + e.message);
+  } finally {
+    document.getElementById('addUserBtn').disabled = false;
+  }
+}
+
+async function removeUser(index) {
+  if (!confirm('Удалить пользователя?')) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/users/${index}`, { method: 'DELETE' });
+    if (!res.ok) { const err = await res.text(); alert('Ошибка: ' + err); return; }
+    await loadUsers();
+  } catch (e) {
+    alert('Ошибка: ' + e.message);
+  }
+}
+
 async function loadServers() {
   const list = document.getElementById('serverList');
   list.innerHTML = '<li class="empty"><span class="status-dot checking"></span>Проверка...</li>';
@@ -195,10 +261,13 @@ async function runUpdate() {
 
 document.getElementById('addBtn').addEventListener('click', addSub);
 document.getElementById('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') addSub(); });
+document.getElementById('addUserBtn').addEventListener('click', addUser);
+document.getElementById('passInput').addEventListener('keydown', e => { if (e.key === 'Enter') addUser(); });
 document.getElementById('updateBtn').addEventListener('click', runUpdate);
 
 loadSubs();
 loadServers();
+loadUsers();
 </script>
 </body>
 </html>

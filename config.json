@@ -16,8 +16,14 @@
       "port": 10808,
       "protocol": "socks",
       "settings": {
-        "auth": "noauth",
-        "udp": true
+        "udp": true,
+        "auth": "password",
+        "accounts": [
+          {
+            "user": "admin",
+            "pass": "admin"
+          }
+        ]
       }
     }
   ],
@@ -33,11 +39,19 @@
   ],
   "routing": {
     "domainStrategy": "AsIs",
+    "balancers": [
+      {
+        "tag": "best-ping",
+        "selector": [
+          "server-"
+        ]
+      }
+    ],
     "rules": [
       {
         "type": "field",
         "network": "tcp,udp",
-        "outboundTag": "direct"
+        "balancerTag": "best-ping"
       }
     ]
   }

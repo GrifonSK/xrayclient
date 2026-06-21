@@ -1,2 +1,4 @@
 .subscription_hash
 backups/
+users.txt
+__pycache__/
