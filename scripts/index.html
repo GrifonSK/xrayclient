@@ -73,6 +73,13 @@ h1 { font-size: 1.4rem; margin-bottom: 20px; color: #fff; }
 </div>
 
 <div class="card">
+  <h2>Observatory — здоровье серверов</h2>
+  <ul class="sub-list" id="obsList">
+    <li class="empty">Загрузка...</li>
+  </ul>
+</div>
+
+<div class="card">
   <h2>Пользователи SOCKS5</h2>
   <div class="input-row" style="margin-bottom:12px;">
     <input type="text" id="userInput" placeholder="логин" autocomplete="off" style="flex:0.4;">
@@ -259,6 +266,39 @@ async function runUpdate() {
   }
 }
 
+async function loadObservatory() {
+  const list = document.getElementById('obsList');
+  try {
+    const res = await fetch(`${API_BASE}/api/observatory`);
+    const data = await res.json();
+    if (data.error) {
+      list.innerHTML = `<li class="empty">Xray API недоступен: ${escapeHtml(data.error)}</li>`;
+      return;
+    }
+    const balancers = Array.isArray(data) ? data : [data];
+    if (balancers.length === 0) {
+      list.innerHTML = '<li class="empty">Нет данных</li>';
+      return;
+    }
+    const parts = [];
+    for (const b of balancers) {
+      parts.push(`<li style="font-weight:600;color:#4ade80;padding:8px 0;">Балансировщик: ${escapeHtml(b.tag || b.BalancerTag || 'best-ping')}</li>`);
+      const nodes = b.health || b.Health || [];
+      for (const n of nodes) {
+        const alive = n.alive || n.Alive;
+        const delay = n.delay != null ? n.delay : (n.Delay != null ? n.Delay : null);
+        const tag = n.tag || n.Tag || n.outboundTag || n.OutboundTag || '?';
+        const dotClass = alive ? 'alive' : 'dead';
+        const delayStr = delay != null ? `${delay}ms` : '—';
+        parts.push(`<li><span class="status-dot ${dotClass}"></span><span class="tag">${escapeHtml(tag)}</span><span class="url">${delayStr}</span></li>`);
+      }
+    }
+    list.innerHTML = parts.join('');
+  } catch (e) {
+    list.innerHTML = `<li class="empty">Ошибка: ${escapeHtml(e.message)}</li>`;
+  }
+}
+
 document.getElementById('addBtn').addEventListener('click', addSub);
 document.getElementById('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') addSub(); });
 document.getElementById('addUserBtn').addEventListener('click', addUser);
@@ -268,6 +308,8 @@ document.getElementById('updateBtn').addEventListener('click', runUpdate);
 loadSubs();
 loadServers();
 loadUsers();
+loadObservatory();
+setInterval(loadObservatory, 10000);
 </script>
 </body>
 </html>

@@ -185,6 +185,28 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self.send_error(500, str(e))
             return
 
+        if parsed.path == "/api/observatory":
+            xray_bin = "/usr/local/bin/xray"
+            if not os.path.exists(xray_bin):
+                self.send_error(500, "xray binary not found")
+                return
+            try:
+                result = subprocess.run(
+                    [xray_bin, "api", "bi", "--server=127.0.0.1:65200"],
+                    capture_output=True, text=True, timeout=10,
+                )
+                out = result.stdout.strip()
+                if result.returncode == 0 and out:
+                    data = json.loads(out)
+                else:
+                    data = {"error": result.stderr.strip() or "empty response"}
+                self.send_json(data)
+            except json.JSONDecodeError:
+                self.send_json({"raw": result.stdout.strip()})
+            except Exception as e:
+                self.send_error(500, str(e))
+            return
+
         self.send_error(404)
 
     def do_DELETE(self):
