@@ -527,35 +527,35 @@ async function loadLogs() {
   }
 }
 
-let clientsData = [];
-
 async function loadClients() {
   const list = document.getElementById('clientList');
   try {
     const res = await fetch(`${API_BASE}/api/clients`);
-    clientsData = await res.json();
-    if (clientsData.length === 0) {
+    const data = await res.json();
+    if (data.length === 0) {
       list.innerHTML = '<li class="empty">Нет VLESS клиентов</li>';
       return;
     }
-    list.innerHTML = clientsData.map((c, i) =>
-      `<li>
+    list.innerHTML = data.map((c, i) => {
+      const vless = `vless://${c.id}@SERVER_IP:PORT?type=tcp&encryption=none&security=none#${encodeURIComponent(c.remark)}`;
+      return `<li>
         <span class="url" style="flex:0.3;font-size:0.7rem;">${escapeHtml(c.remark)}</span>
         <span class="url" style="font-size:0.65rem;color:#666;word-break:break-all;">${escapeHtml(c.id)}</span>
         <button class="btn btn-danger" onclick="deleteClient(${i})" title="Удалить">✕</button>
-        <button class="btn btn-primary" style="padding:4px 8px;font-size:0.6rem;" onclick="copyVless(${i})">URI</button>
-      </li>`
-    ).join('');
+        <button class="btn btn-primary" style="padding:4px 8px;font-size:0.6rem;" onclick="copyVless('${escapeHtml(vless)}')">URI</button>
+      </li>`;
+    }).join('');
   } catch (e) {
     list.innerHTML = '<li class="empty">Ошибка загрузки</li>';
   }
 }
 
-function copyVless(i) {
-  const c = clientsData[i];
-  if (!c) return;
-  const vless = `vless://${c.id}@SERVER_IP:PORT?type=tcp&encryption=none&security=none#${encodeURIComponent(c.remark)}`;
-  prompt('Скопируйте VLESS URI:', vless);
+function copyVless(vless) {
+  navigator.clipboard.writeText(vless).then(() => {
+    alert('VLESS URI скопирован!\n' + vless);
+  }).catch(() => {
+    prompt('Скопируйте вручную:', vless);
+  });
 }
 
 async function addClient() {
