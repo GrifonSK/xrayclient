@@ -16,7 +16,7 @@ for f in update_xray_config.py server.py index.html; do
     fi
 done
 
-for f in config.json subscriptions.txt; do
+for f in config.json subscriptions.txt clients.txt; do
     if [ ! -f "$CONFIG_DIR/$f" ] && [ -f "/opt/xrayclient/config/$f" ]; then
         cp "/opt/xrayclient/config/$f" "$CONFIG_DIR/$f"
         echo "Copied $f to config directory"
@@ -31,6 +31,13 @@ if [ ! -f "$CONFIG_DIR/users.txt" ]; then
         echo "# SOCKS5 users (user:pass one per line)" > "$CONFIG_DIR/users.txt"
         echo "admin:admin" >> "$CONFIG_DIR/users.txt"
         echo "Created default users.txt with admin:admin"
+    fi
+fi
+
+if [ ! -f "$CONFIG_DIR/clients.txt" ]; then
+    if [ -f "/opt/xrayclient/config/clients.txt" ]; then
+        cp "/opt/xrayclient/config/clients.txt" "$CONFIG_DIR/clients.txt"
+        echo "Copied clients.txt to config directory"
     fi
 fi
 

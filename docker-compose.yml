@@ -5,6 +5,7 @@ services:
     restart: unless-stopped
     ports:
       - "10888:10808"
+      - "10890:10810"
       - "10889:8080"
     volumes:
       - /etc/docker/xrayclienttest:/mnt/xrayclient/config

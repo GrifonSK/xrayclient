@@ -14,6 +14,7 @@ from hashlib import sha256
 CONFIG_DIR = "/mnt/xrayclient/config"
 SUBSCRIPTIONS_FILE = os.path.join(CONFIG_DIR, "subscriptions.txt")
 USERS_FILE = os.path.join(CONFIG_DIR, "users.txt")
+CLIENTS_FILE = os.path.join(CONFIG_DIR, "clients.txt")
 CONFIG_PATH = os.path.join(CONFIG_DIR, "config.json")
 BACKUP_DIR = os.path.join(CONFIG_DIR, "backups")
 STATE_FILE = os.path.join(CONFIG_DIR, ".subscription_hash")
@@ -177,6 +178,21 @@ def read_users() -> list[dict]:
     return users
 
 
+def read_clients() -> list[dict]:
+    if not os.path.exists(CLIENTS_FILE):
+        return []
+    clients = []
+    with open(CLIENTS_FILE) as f:
+        for line in f:
+            s = line.strip()
+            if not s or s.startswith("#"):
+                continue
+            if "|" in s:
+                uuid, _, remark = s.partition("|")
+                clients.append({"id": uuid.strip(), "remark": remark.strip()})
+    return clients
+
+
 def generate_config(outbounds: list) -> dict:
     socks_settings = {"udp": True}
     users = read_users()
@@ -186,6 +202,29 @@ def generate_config(outbounds: list) -> dict:
     else:
         socks_settings["auth"] = "noauth"
 
+    clients = read_clients()
+    vless_settings = {"decryption": "none"}
+    if clients:
+        vless_settings["clients"] = [{"id": c["id"], "encryption": "none"} for c in clients]
+    else:
+        vless_settings["clients"] = []
+
+    inbounds = [
+        {
+            "listen": "0.0.0.0",
+            "port": 10808,
+            "protocol": "socks",
+            "settings": socks_settings,
+        }
+    ]
+    if vless_settings["clients"]:
+        inbounds.append({
+            "listen": "0.0.0.0",
+            "port": 10810,
+            "protocol": "vless",
+            "settings": vless_settings,
+        })
+
     config = {
         "log": {"loglevel": "warning"},
         "observatory": {
@@ -194,14 +233,7 @@ def generate_config(outbounds: list) -> dict:
             "probeInterval": "60s",
             "enableConcurrency": True,
         },
-        "inbounds": [
-            {
-                "listen": "0.0.0.0",
-                "port": 10808,
-                "protocol": "socks",
-                "settings": socks_settings,
-            }
-        ],
+        "inbounds": inbounds,
         "outbounds": [],
         "routing": {
             "domainStrategy": "AsIs",

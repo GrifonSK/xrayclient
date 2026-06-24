@@ -1,0 +1,2 @@
+# Xray VLESS clients (uuid|remark one per line)
+5f61b098-ca72-4f68-816c-ba0327af7ca8|default

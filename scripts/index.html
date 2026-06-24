@@ -312,6 +312,17 @@ h1::after {
 </div>
 
 <div class="card">
+  <h2>Клиенты VLESS</h2>
+  <div class="input-row" style="margin-bottom:12px;">
+    <input type="text" id="remarkInput" placeholder="имя клиента" autocomplete="off">
+    <button class="btn btn-primary" id="addClientBtn">Создать</button>
+  </div>
+  <ul class="sub-list" id="clientList">
+    <li class="empty">Загрузка...</li>
+  </ul>
+</div>
+
+<div class="card">
   <button class="btn btn-success" id="updateBtn">Запустить обновление Xray</button>
   <div class="spinner" id="spinner"></div>
   <pre id="output"></pre>
@@ -516,15 +527,81 @@ async function loadLogs() {
   }
 }
 
+async function loadClients() {
+  const list = document.getElementById('clientList');
+  try {
+    const res = await fetch(`${API_BASE}/api/clients`);
+    const data = await res.json();
+    if (data.length === 0) {
+      list.innerHTML = '<li class="empty">Нет VLESS клиентов</li>';
+      return;
+    }
+    list.innerHTML = data.map((c, i) => {
+      const vless = `vless://${c.id}@SERVER_IP:PORT?type=tcp&encryption=none&security=none#${encodeURIComponent(c.remark)}`;
+      return `<li>
+        <span class="url" style="flex:0.3;font-size:0.7rem;">${escapeHtml(c.remark)}</span>
+        <span class="url" style="font-size:0.65rem;color:#666;word-break:break-all;">${escapeHtml(c.id)}</span>
+        <button class="btn btn-danger" onclick="deleteClient(${i})" title="Удалить">✕</button>
+        <button class="btn btn-primary" style="padding:4px 8px;font-size:0.6rem;" onclick="copyVless('${escapeHtml(vless)}')">URI</button>
+      </li>`;
+    }).join('');
+  } catch (e) {
+    list.innerHTML = '<li class="empty">Ошибка загрузки</li>';
+  }
+}
+
+function copyVless(vless) {
+  navigator.clipboard.writeText(vless).then(() => {
+    alert('VLESS URI скопирован!\n' + vless);
+  }).catch(() => {
+    prompt('Скопируйте вручную:', vless);
+  });
+}
+
+async function addClient() {
+  const remark = document.getElementById('remarkInput').value.trim();
+  document.getElementById('addClientBtn').disabled = true;
+  try {
+    const res = await fetch(`${API_BASE}/api/clients`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({remark: remark || 'client'})
+    });
+    if (!res.ok) { const err = await res.text(); alert('Ошибка: ' + err); return; }
+    const data = await res.json();
+    document.getElementById('remarkInput').value = '';
+    await loadClients();
+    alert(`Создан UUID: ${data.id}`);
+  } catch (e) {
+    alert('Ошибка: ' + e.message);
+  } finally {
+    document.getElementById('addClientBtn').disabled = false;
+  }
+}
+
+async function deleteClient(index) {
+  if (!confirm('Удалить VLESS клиента?')) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/clients/${index}`, { method: 'DELETE' });
+    if (!res.ok) { const err = await res.text(); alert('Ошибка: ' + err); return; }
+    await loadClients();
+  } catch (e) {
+    alert('Ошибка: ' + e.message);
+  }
+}
+
 document.getElementById('addBtn').addEventListener('click', addSub);
 document.getElementById('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') addSub(); });
 document.getElementById('addUserBtn').addEventListener('click', addUser);
 document.getElementById('passInput').addEventListener('keydown', e => { if (e.key === 'Enter') addUser(); });
+document.getElementById('addClientBtn').addEventListener('click', addClient);
+document.getElementById('remarkInput').addEventListener('keydown', e => { if (e.key === 'Enter') addClient(); });
 document.getElementById('updateBtn').addEventListener('click', runUpdate);
 
 loadSubs();
 loadServers();
 loadUsers();
+loadClients();
 loadLogs();
 </script>
 </body>
